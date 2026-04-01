@@ -1,18 +1,18 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<limits.h>
-#include<memory.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <memory.h>
 
 /* Estrutura de dados para representar grafos */
-typedef struct a{ /* Celula de uma lista de arestas */
-	int    vizinho;
-	struct a *prox;
+typedef struct a { /* Celula de uma lista de arestas */
+    int vizinho;
+    struct a *prox;
 } Aresta;
 
-typedef struct v{
-	int nome;
-	int marcado;   /* Usado por eConexo: 0 = Nao visitado, 1 = Visitado */
-	Aresta *prim;
+typedef struct v {
+    int nome;
+    int marcado;   /* Usado por eConexo: 0 = Nao visitado, 1 = Visitado */
+    Aresta *prim;
 } Vertice;
 
 /* Declaracoes das funcoes para manipulacao de grafos */
@@ -22,129 +22,116 @@ int  acrescentaAresta(Vertice G[], int ordem, int v1, int v2);
 void imprimeGrafo(Vertice G[], int ordem);
 int  eConexo(Vertice G[], int ordem);
 int  quantidadeComponentesConexas(Vertice G[], int ordem);
- 
+
+/* Vertices de Corte */
+int  componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado);
+void exibeVerticesDeCorte(Vertice G[], int ordem);
 
 /* Criacao de um grafo com ordem predefinida (passada como argumento), e, inicilamente, sem nenhuma aresta */
 void criaGrafo(Vertice **G, int ordem){
-	int i;
-	*G= (Vertice*) malloc(sizeof(Vertice)*ordem); /* Alcacao dinamica de um vetor de vertices */
-	
-	for(i=0; i<ordem; i++){
-		(*G)[i].nome= i;
-		(*G)[i].prim= NULL;    /* Cada vertice sem nenhuma aresta incidente */
-	}
+    int i;
+    *G= (Vertice*) malloc(sizeof(Vertice)*ordem); /* Alocacao dinamica de um vetor de vertices */
+    
+    for(i=0; i<ordem; i++){
+        (*G)[i].nome= i;
+        (*G)[i].prim= NULL;    /* Cada vertice sem nenhuma aresta incidente */
+    }
 }
 
 /* Desaloca a memoria dinamica usada para armazenar um grafo */
 void destroiGrafo(Vertice **G, int ordem){
-	int i;
+    int i;
     Aresta *a, *n;
     
-	for(i=0; i<ordem; i++){ /* Remove lista de adjacencia de cada vertice */
-	    a= (*G)[i].prim;
+    for(i=0; i<ordem; i++){ /* Remove lista de adjacencia de cada vertice */
+        a= (*G)[i].prim;
         while (a!= NULL){
               n= a->prox;
               free(a);
               a= n;
         }
-	}
+    }
     free(*G);  /* Remove o vetor de vertices */
 }
 
-/*  
- * Acrescenta uma nova aresta em um grafo previamente criado. 
- *   Devem ser passados os extremos v1 e v2 da aresta a ser acrescentada 
+/* * Acrescenta uma nova aresta em um grafo previamente criado. 
+ * Devem ser passados os extremos v1 e v2 da aresta a ser acrescentada 
  * Como o grafo nao e orientado, para uma aresta com extremos i e j, quando
- *   i != j, serao criadas, na estrutura de dados, arestas (i,j) e (j,i) .
+ * i != j, serao criadas, na estrutura de dados, arestas (i,j) e (j,i) .
  */
 int acrescentaAresta(Vertice G[], int ordem, int v1, int v2){
     Aresta *A1, *A2;
     
-	if (v1<0 || v1 >= ordem) /* Testo se vertices sao validos */
-	   return 0;
-	if (v2<0 || v2 >= ordem)
-	   return 0;
-	
-	/* Acrescento aresta na lista do vertice v1 */
-	A1= (Aresta *) malloc(sizeof(Aresta));
-	A1->vizinho= v2;
-	A1->prox= G[v1].prim;
-	G[v1].prim= A1;
+    if (v1<0 || v1 >= ordem) /* Testo se vertices sao validos */
+       return 0;
+    if (v2<0 || v2 >= ordem)
+       return 0;
+    
+    /* Acrescento aresta na lista do vertice v1 */
+    A1= (Aresta *) malloc(sizeof(Aresta));
+    A1->vizinho= v2;
+    A1->prox= G[v1].prim;
+    G[v1].prim= A1;
 
-	if (v1 == v2) return 1; /* Aresta e um laco */
+    if (v1 == v2) return 1; /* Aresta e um laco */
 
-	/* Acrescento aresta na lista do vertice v2 se v2 != v1 */	
-	A2= (Aresta *) malloc(sizeof(Aresta));
-	A2->vizinho= v1;
-	A2->prox= G[v2].prim;
-	G[v2].prim= A2;
-	
-	return 1;
+    /* Acrescento aresta na lista do vertice v2 se v2 != v1 */  
+    A2= (Aresta *) malloc(sizeof(Aresta));
+    A2->vizinho= v1;
+    A2->prox= G[v2].prim;
+    G[v2].prim= A2;
+    
+    return 1;
 }
-
 
 /* Imprime um grafo com uma notacao similar a uma lista de adjacencia */
 void imprimeGrafo(Vertice G[], int ordem){
-	int i;
-	Aresta *aux;
+    int i;
+    Aresta *aux;
 
-	printf("\nOrdem:   %d",ordem);
-	printf("\nLista de Adjacencia:\n");
+    printf("\nOrdem:   %d",ordem);
+    printf("\nLista de Adjacencia:\n");
 
-	for (i=0; i<ordem; i++){
-		printf("\n    v%d: ", i);
-		aux= G[i].prim;
-		for( ; aux != NULL; aux= aux->prox)
-			printf("  v%d", aux->vizinho);
-	}
-	printf("\n\n");
-
+    for (i=0; i<ordem; i++){
+        printf("    v%d: ", i);
+        aux= G[i].prim;
+        for( ; aux != NULL; aux= aux->prox)
+            printf("  v%d", aux->vizinho);
+        printf("\n");
+    }
+    printf("\n");
 }
 
 /*
  * Recebe um grafo G nao vazio como argumento e retorna:
- *   1, se o grafo for conexo; ou
- *   0, se o grafo nao for conexo.
- *
- * Utiliza o campo 'marcado' da struct Vertice como marcacao:
- *   0 = nao visitado, 1 = visitado.
+ * 1, se o grafo for conexo; ou
+ * 0, se o grafo nao for conexo.
  */
-
 int eConexo(Vertice G[], int ordem){
     int i;
     int marcouNovo;   /* Controla se algum vertice novo foi marcado na iteracao */
     Aresta *aux;      /* Ponteiro auxiliar para percorrer a lista de arestas */
 
-    /* Passos 1 e 2: marca v0 com 1 e todos os demais com 0 */
     G[0].marcado = 1;
     for(i = 1; i < ordem; i++)
         G[i].marcado = 0;
 
-    /* Passo 3: repete ate que nenhum novo vertice seja marcado */
     do {
         marcouNovo = 0;
-
-        /* Percorre todos os vertices vi marcados com 1 */
         for(i = 0; i < ordem; i++){
             if(G[i].marcado == 1){
-
-                /* Percorre cada vizinho vj de vi pela lista de arestas */
                 aux = G[i].prim;
                 while(aux != NULL){
-                    /* Se vj esta marcado com 0, marca-o com 1 */
                     if(G[aux->vizinho].marcado == 0){
                         G[aux->vizinho].marcado = 1;
                         marcouNovo = 1;
                     }
                     aux = aux->prox;
                 }
-
             }
         }
-
     } while(marcouNovo);
 
-    /* Passo 4: verifica se todos os vertices foram marcados com 1 */
     for(i = 0; i < ordem; i++)
         if(G[i].marcado == 0)
             return 0; /* Grafo nao e conexo */
@@ -152,76 +139,132 @@ int eConexo(Vertice G[], int ordem){
     return 1; /* Grafo e conexo */
 }
 
-/*
- * Retorna a quantidade de componentes conexas do grafo.
- * Nao imprime nada, apenas calcula e devolve o resultado.
- */
+/*Retorna a quantidade de componentes conexas do grafo.*/
 int quantidadeComponentesConexas(Vertice G[], int ordem){
-	int i;
-	int componentes = 0;
-	int marcouNovo;
-	Aresta *aux;
+    int i;
+    int componentes = 0;
+    int marcouNovo;
+    Aresta *aux;
 
-	if(ordem <= 0)
-		return 0;
+    if(ordem <= 0) return 0;
 
-	/* Inicializa todos os vertices como nao visitados. */
-	for(i = 0; i < ordem; i++)
-		G[i].marcado = 0;
+    for(i = 0; i < ordem; i++) G[i].marcado = 0;
 
-	/* Cada vez que encontra um vertice nao visitado, inicia uma nova componente. */
-	for(i = 0; i < ordem; i++){
-		int j;
+    for(i = 0; i < ordem; i++){
+        int j;
+        if(G[i].marcado == 1) continue;
 
-		if(G[i].marcado == 1)
-			continue;
+        componentes++;
+        G[i].marcado = 1;
 
-		componentes++;
-		G[i].marcado = 1;
+        do {
+            marcouNovo = 0;
+            for(j = 0; j < ordem; j++){
+                if(G[j].marcado == 1){
+                    aux = G[j].prim;
+                    while(aux != NULL){
+                        if(G[aux->vizinho].marcado == 0){
+                            G[aux->vizinho].marcado = 1;
+                            marcouNovo = 1;
+                        }
+                        aux = aux->prox;
+                    }
+                }
+            }
+        } while(marcouNovo);
+    }
+    return componentes;
+}
 
-		/* Mesmo processo de propagacao por marcacao usado em eConexo. */
-		do {
-			marcouNovo = 0;
-			for(j = 0; j < ordem; j++){
-				if(G[j].marcado == 1){
-					aux = G[j].prim;
-					while(aux != NULL){
-						if(G[aux->vizinho].marcado == 0){
-							G[aux->vizinho].marcado = 1;
-							marcouNovo = 1;
-						}
-						aux = aux->prox;
-					}
-				}
-			}
-		} while(marcouNovo);
-	}
+/* Conta componentes ignorando o vertice 'v_ignorado'*/
+int componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado){
+    int i, j, componentes = 0, marcouNovo;
+    Aresta *aux;
 
-	return componentes;
+    if(ordem <= 0) return 0;
+
+    for(i = 0; i < ordem; i++) G[i].marcado = 0;
+
+    /* Marca o vertice que queremos ignorar como 'visitado' logo de cara,
+       assim o algoritmo pula ele e finge que ele nao existe */
+    if (v_ignorado >= 0 && v_ignorado < ordem)
+        G[v_ignorado].marcado = 1;
+
+    for(i = 0; i < ordem; i++){
+        if(G[i].marcado == 1) continue;
+
+        componentes++;
+        G[i].marcado = 1;
+
+        do {
+            marcouNovo = 0;
+            for(j = 0; j < ordem; j++){
+                if(j == v_ignorado) continue; /* Protecao extra para pular o vertice */
+
+                if(G[j].marcado == 1){
+                    aux = G[j].prim;
+                    while(aux != NULL){
+                        /* Nao podemos "viajar" para o vertice ignorado */
+                        if(aux->vizinho != v_ignorado && G[aux->vizinho].marcado == 0){
+                            G[aux->vizinho].marcado = 1;
+                            marcouNovo = 1;
+                        }
+                        aux = aux->prox;
+                    }
+                }
+            }
+        } while(marcouNovo);
+    }
+
+    return componentes;
+}
+
+/* Testa todos os vertices e exibe os que sao de corte*/
+void exibeVerticesDeCorte(Vertice G[], int ordem){
+    int i;
+    int qtdOriginal = quantidadeComponentesConexas(G, ordem);
+    int encontrouAlgum = 0;
+
+    printf("Vertices de Corte: ");
+    for(i = 0; i < ordem; i++){
+        int qtdSemVertice = componentesGrafoSemVertice(G, ordem, i);
+        
+        /* O vertice i e de corte se remove-lo fragmenta o grafo,
+           ou seja, aumenta o numero de componentes originais. */
+        if(qtdSemVertice > qtdOriginal){
+            printf("v%d ", i);
+            encontrouAlgum = 1;
+        }
+    }
+
+    if(!encontrouAlgum){
+        printf("Nenhum");
+    }
+    printf("\n");
 }
 
 /*
- * Programa simples para testar a representacao de grafo e a funcao eConexo
+ * Programa principal
  */
 int main(int argc, char *argv[]) {
-	int qtdComponentes;
-	Vertice *G;
-	int ordemG= 10; /* Vertices identificado de 0 ate 9 */
-		
-	criaGrafo(&G, ordemG);
-	acrescentaAresta(G,ordemG,0,1);
-	acrescentaAresta(G,ordemG,0,2);
-	acrescentaAresta(G,ordemG,0,7);
-	acrescentaAresta(G,ordemG,2,4);
-	acrescentaAresta(G,ordemG,2,2);
-	acrescentaAresta(G,ordemG,2,5);
-	acrescentaAresta(G,ordemG,3,5);
-	acrescentaAresta(G,ordemG,4,6);
-	acrescentaAresta(G,ordemG,3,6);
-	acrescentaAresta(G,ordemG,7,7);
-	acrescentaAresta(G,ordemG,8,9);
+    int qtdComponentes;
+    Vertice *G;
+    int ordemG = 10; /* Vertices identificado de 0 ate 9 */
+        
+    criaGrafo(&G, ordemG);
+    acrescentaAresta(G,ordemG,0,1);
+    acrescentaAresta(G,ordemG,0,2);
+    acrescentaAresta(G,ordemG,0,7);
+    acrescentaAresta(G,ordemG,2,4);
+    acrescentaAresta(G,ordemG,2,2);
+    acrescentaAresta(G,ordemG,2,5);
+    acrescentaAresta(G,ordemG,3,5);
+    acrescentaAresta(G,ordemG,4,6);
+    acrescentaAresta(G,ordemG,3,6);
+    acrescentaAresta(G,ordemG,7,7);
+    acrescentaAresta(G,ordemG,8,9);
 
-	imprimeGrafo(G, ordemG);
+    imprimeGrafo(G, ordemG);
 
     /* Testa eConexo */
     if(eConexo(G, ordemG))
@@ -229,12 +272,16 @@ int main(int argc, char *argv[]) {
     else
         printf("O grafo NAO e conexo.\n");
 
-	qtdComponentes = quantidadeComponentesConexas(G, ordemG);
-	printf("Quantidade de componentes conexas: %d\n", qtdComponentes);
-	
-	destroiGrafo(&G, ordemG);
+    /* Quantidade de Componentes */
+    qtdComponentes = quantidadeComponentesConexas(G, ordemG);
+    printf("Quantidade de componentes conexas: %d\n", qtdComponentes);
+    
+    /* Vértices de Corte */
+    exibeVerticesDeCorte(G, ordemG);
+    
+    destroiGrafo(&G, ordemG);
 
-	printf("\nPressione uma tecla para terminar\n");
+    printf("\nPressione ENTER para terminar\n");
     getchar();
-	return(0);
+    return(0);
 }
