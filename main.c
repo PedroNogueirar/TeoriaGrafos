@@ -3,7 +3,7 @@
 #include<limits.h>
 #include<memory.h>
 
- * Estrutura de dados para representar grafos
+/* Estrutura de dados para representar grafos */
 typedef struct a{ /* Celula de uma lista de arestas */
 	int    vizinho;
 	struct a *prox;
@@ -21,6 +21,7 @@ void destroiGrafo(Vertice **G, int ordem);
 int  acrescentaAresta(Vertice G[], int ordem, int v1, int v2);
 void imprimeGrafo(Vertice G[], int ordem);
 int  eConexo(Vertice G[], int ordem);
+int  quantidadeComponentesConexas(Vertice G[], int ordem);
  
 
 /* Criacao de um grafo com ordem predefinida (passada como argumento), e, inicilamente, sem nenhuma aresta */
@@ -152,10 +153,58 @@ int eConexo(Vertice G[], int ordem){
 }
 
 /*
+ * Retorna a quantidade de componentes conexas do grafo.
+ * Nao imprime nada, apenas calcula e devolve o resultado.
+ */
+int quantidadeComponentesConexas(Vertice G[], int ordem){
+	int i;
+	int componentes = 0;
+	int marcouNovo;
+	Aresta *aux;
+
+	if(ordem <= 0)
+		return 0;
+
+	/* Inicializa todos os vertices como nao visitados. */
+	for(i = 0; i < ordem; i++)
+		G[i].marcado = 0;
+
+	/* Cada vez que encontra um vertice nao visitado, inicia uma nova componente. */
+	for(i = 0; i < ordem; i++){
+		int j;
+
+		if(G[i].marcado == 1)
+			continue;
+
+		componentes++;
+		G[i].marcado = 1;
+
+		/* Mesmo processo de propagacao por marcacao usado em eConexo. */
+		do {
+			marcouNovo = 0;
+			for(j = 0; j < ordem; j++){
+				if(G[j].marcado == 1){
+					aux = G[j].prim;
+					while(aux != NULL){
+						if(G[aux->vizinho].marcado == 0){
+							G[aux->vizinho].marcado = 1;
+							marcouNovo = 1;
+						}
+						aux = aux->prox;
+					}
+				}
+			}
+		} while(marcouNovo);
+	}
+
+	return componentes;
+}
+
+/*
  * Programa simples para testar a representacao de grafo e a funcao eConexo
  */
 int main(int argc, char *argv[]) {
-    int i;
+	int qtdComponentes;
 	Vertice *G;
 	int ordemG= 10; /* Vertices identificado de 0 ate 9 */
 		
@@ -179,6 +228,9 @@ int main(int argc, char *argv[]) {
         printf("O grafo E conexo.\n");
     else
         printf("O grafo NAO e conexo.\n");
+
+	qtdComponentes = quantidadeComponentesConexas(G, ordemG);
+	printf("Quantidade de componentes conexas: %d\n", qtdComponentes);
 	
 	destroiGrafo(&G, ordemG);
 
