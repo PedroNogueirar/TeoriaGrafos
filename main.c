@@ -1,3 +1,17 @@
+/*
+============================================================
+            PROJETO DE TEORIA DOS GRAFOS
+                COMPONENTES E CORTES
+============================================================
+
+Integrantes do grupo:
+Bruna Soncini                  RA: 10428267
+Gustavo Galhardo Rodrigues     RA: 10403091
+Pedro Nogueira Ribeiro         RA: 10324924
+Tales Hernandes                RA: 10408846
+============================================================
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -352,7 +366,6 @@ void exibeArestasDeCorte(Vertice G[], int ordem)
     Aresta *aux;
 
     printf("Arestas de Corte: ");
-
     for (i = 0; i < ordem; i++)
     {
         aux = G[i].prim;
