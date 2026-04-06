@@ -54,6 +54,7 @@ void criaGrafo(Vertice **G, int ordem)
     for (i = 0; i < ordem; i++)
     {
         (*G)[i].nome = i;
+        (*G)[i].marcado = 0;
         (*G)[i].prim = NULL; /* Cada vertice sem nenhuma aresta incidente */
     }
 }
@@ -404,22 +405,18 @@ int main(int argc, char *argv[])
 {
     int qtdComponentes;
     Vertice *G;
-    int ordemG = 10; /* Vertices identificado de 0 ate 9 */
+    int ordemG = 5; /* Vertices identificado de 0 ate 9 */
 
+    printf("Criando grafo...\n");
+    
     criaGrafo(&G, ordemG);
-    acrescentaAresta(G, ordemG, 0, 1);
-    acrescentaAresta(G, ordemG, 0, 2);
-    acrescentaAresta(G, ordemG, 0, 7);
-    acrescentaAresta(G, ordemG, 2, 4);
-    acrescentaAresta(G, ordemG, 2, 2);
-    acrescentaAresta(G, ordemG, 2, 5);
-    acrescentaAresta(G, ordemG, 3, 5);
-    acrescentaAresta(G, ordemG, 4, 6);
-    acrescentaAresta(G, ordemG, 3, 6);
-    acrescentaAresta(G, ordemG, 7, 7);
-    acrescentaAresta(G, ordemG, 8, 9);
-
-    imprimeGrafo(G, ordemG);
+    acrescentaAresta(G, 5, 0, 1);
+    acrescentaAresta(G, 5, 1, 2);
+    acrescentaAresta(G, 5, 2, 3);
+    acrescentaAresta(G, 5, 3, 4);
+    
+    printf("Imprimindo grafo...\n");
+    imprimeGrafo(G, 4);
 
     /* Testa eConexo */
     if (eConexo(G, ordemG))
