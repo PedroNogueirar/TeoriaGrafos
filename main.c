@@ -41,9 +41,9 @@ int quantidadeComponentesConexas(Vertice G[], int ordem);
 
 /* Vertices e Arestas de Corte */
 int componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado);
-void exibeVerticesDeCorte(Vertice G[], int ordem);
+int eVerticeDeCorte(Vertice G[], int ordem, int v);
 int componentesGrafoSemAresta(Vertice G[], int ordem, int v1_ignorado, int v2_ignorado);
-void exibeArestasDeCorte(Vertice G[], int ordem);
+int eArestaDeCorte(Vertice G[], int ordem, int v1, int v2);
 
 /* Criacao de um grafo com ordem predefinida (passada como argumento), e, inicilamente, sem nenhuma aresta */
 void criaGrafo(Vertice **G, int ordem)
@@ -78,10 +78,11 @@ void destroiGrafo(Vertice **G, int ordem)
     free(*G); /* Remove o vetor de vertices */
 }
 
-/* * Acrescenta uma nova aresta em um grafo previamente criado.
- * Devem ser passados os extremos v1 e v2 da aresta a ser acrescentada
+/*
+ * Acrescenta uma nova aresta em um grafo previamente criado.
+ * Devem ser passados os extremos v1 e v2 da aresta a ser acrescentada.
  * Como o grafo nao e orientado, para uma aresta com extremos i e j, quando
- * i != j, serao criadas, na estrutura de dados, arestas (i,j) e (j,i) .
+ * i != j, serao criadas, na estrutura de dados, arestas (i,j) e (j,i).
  */
 int acrescentaAresta(Vertice G[], int ordem, int v1, int v2)
 {
@@ -173,10 +174,10 @@ int eConexo(Vertice G[], int ordem)
     return 1; /* Grafo e conexo */
 }
 
-/*Retorna a quantidade de componentes conexas do grafo.*/
+/* Retorna a quantidade de componentes conexas do grafo. */
 int quantidadeComponentesConexas(Vertice G[], int ordem)
 {
-    int i;
+    int i, j;
     int componentes = 0;
     int marcouNovo;
     Aresta *aux;
@@ -189,7 +190,6 @@ int quantidadeComponentesConexas(Vertice G[], int ordem)
 
     for (i = 0; i < ordem; i++)
     {
-        int j;
         if (G[i].marcado == 1)
             continue;
 
@@ -220,7 +220,7 @@ int quantidadeComponentesConexas(Vertice G[], int ordem)
     return componentes;
 }
 
-/* Conta componentes ignorando o vertice 'v_ignorado'*/
+/* Conta componentes ignorando o vertice 'v_ignorado' */
 int componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado)
 {
     int i, j, componentes = 0, marcouNovo;
@@ -232,8 +232,7 @@ int componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado)
     for (i = 0; i < ordem; i++)
         G[i].marcado = 0;
 
-    /* Marca o vertice que queremos ignorar como 'visitado' logo de cara,
-       assim o algoritmo pula ele e finge que ele nao existe */
+    /* Marca o vertice ignorado como visitado para que o algoritmo o ignore */
     if (v_ignorado >= 0 && v_ignorado < ordem)
         G[v_ignorado].marcado = 1;
 
@@ -251,7 +250,7 @@ int componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado)
             for (j = 0; j < ordem; j++)
             {
                 if (j == v_ignorado)
-                    continue; /* Protecao extra para pular o vertice */
+                    continue; /* Protecao extra para pular o vertice ignorado */
 
                 if (G[j].marcado == 1)
                 {
@@ -272,6 +271,17 @@ int componentesGrafoSemVertice(Vertice G[], int ordem, int v_ignorado)
     }
 
     return componentes;
+}
+
+/*
+ * Retorna 1 se o vertice v e de corte no grafo G, ou seja,
+ * sua remocao aumenta o numero de componentes conexas.
+ * Retorna 0 caso contrario.
+ */
+int eVerticeDeCorte(Vertice G[], int ordem, int v)
+{
+    int qtdOriginal = quantidadeComponentesConexas(G, ordem);
+    return componentesGrafoSemVertice(G, ordem, v) > qtdOriginal;
 }
 
 /* Conta componentes ignorando a aresta entre v1_ignorado e v2_ignorado */
@@ -311,7 +321,6 @@ int componentesGrafoSemAresta(Vertice G[], int ordem, int v1_ignorado, int v2_ig
                         if (!((j == v1_ignorado && aux->vizinho == v2_ignorado) ||
                               (j == v2_ignorado && aux->vizinho == v1_ignorado)))
                         {
-
                             if (G[aux->vizinho].marcado == 0)
                             {
                                 G[aux->vizinho].marcado = 1;
@@ -330,93 +339,38 @@ int componentesGrafoSemAresta(Vertice G[], int ordem, int v1_ignorado, int v2_ig
     return componentes;
 }
 
-/* Testa todos os vertices e exibe os que sao de corte*/
-void exibeVerticesDeCorte(Vertice G[], int ordem)
+/*
+ * Retorna 1 se a aresta (v1, v2) e de corte no grafo
+ */
+int eArestaDeCorte(Vertice G[], int ordem, int v1, int v2)
 {
-    int i;
     int qtdOriginal = quantidadeComponentesConexas(G, ordem);
-    int encontrouAlgum = 0;
-
-    printf("Vertices de Corte: ");
-    for (i = 0; i < ordem; i++)
-    {
-        int qtdSemVertice = componentesGrafoSemVertice(G, ordem, i);
-
-        /* O vertice i e de corte se remove-lo fragmenta o grafo,
-           ou seja, aumenta o numero de componentes originais. */
-        if (qtdSemVertice > qtdOriginal)
-        {
-            printf("v%d ", i);
-            encontrouAlgum = 1;
-        }
-    }
-
-    if (!encontrouAlgum)
-    {
-        printf("Nenhum");
-    }
-    printf("\n");
-}
-
-/* Testa todas as arestas e exibe as que sao de corte */
-void exibeArestasDeCorte(Vertice G[], int ordem)
-{
-    int i;
-    int qtdOriginal = quantidadeComponentesConexas(G, ordem);
-    int encontrouAlguma = 0;
-    Aresta *aux;
-
-    printf("Arestas de Corte: ");
-    for (i = 0; i < ordem; i++)
-    {
-        aux = G[i].prim;
-
-        while (aux != NULL)
-        {
-            /* Para nao testar a mesma aresta duas vezes,
-               so consideramos quando i < vizinho */
-            if (i < aux->vizinho)
-            {
-                int qtdSemAresta = componentesGrafoSemAresta(G, ordem, i, aux->vizinho);
-
-                if (qtdSemAresta > qtdOriginal)
-                {
-                    printf("(v%d,v%d) ", i, aux->vizinho);
-                    encontrouAlguma = 1;
-                }
-            }
-
-            aux = aux->prox;
-        }
-    }
-
-    if (!encontrouAlguma)
-    {
-        printf("Nenhuma");
-    }
-
-    printf("\n");
+    return componentesGrafoSemAresta(G, ordem, v1, v2) > qtdOriginal;
 }
 
 /*
- * Programa principal
+ * Programa principal:
+ * Inicializa um grafo, executa os algoritmos e imprime os resultados.
  */
+
 int main(int argc, char *argv[])
 {
-    int qtdComponentes;
+    int i, qtdComponentes;
     Vertice *G;
-    int ordemG = 5; /* Vertices identificado de 0 ate 9 */
+    int ordemG = 5; /* Vertices identificados de 0 ate 4 */
+    Aresta *aux;
+    int encontrouAlgum;
 
     printf("Criando grafo...\n");
-    
+
     criaGrafo(&G, ordemG);
     acrescentaAresta(G, 5, 0, 1);
     acrescentaAresta(G, 5, 1, 2);
     acrescentaAresta(G, 5, 2, 3);
     acrescentaAresta(G, 5, 3, 4);
-    
+
     printf("Imprimindo grafo...\n");
-    imprimeGrafo(G, 4);
+    imprimeGrafo(G, ordemG); /* Corrigido: era 4, deve ser ordemG */
 
     /* Testa eConexo */
     if (eConexo(G, ordemG))
@@ -428,13 +382,48 @@ int main(int argc, char *argv[])
     qtdComponentes = quantidadeComponentesConexas(G, ordemG);
     printf("Quantidade de componentes conexas: %d\n", qtdComponentes);
 
-    /* Vértices e Arestas de Corte */
-    exibeVerticesDeCorte(G, ordemG);
-    exibeArestasDeCorte(G, ordemG);
+    /* Vertices de Corte */
+    encontrouAlgum = 0;
+    printf("Vertices de Corte: ");
+    for (i = 0; i < ordemG; i++)
+    {
+        if (eVerticeDeCorte(G, ordemG, i))
+        {
+            printf("v%d ", i);
+            encontrouAlgum = 1;
+        }
+    }
+    if (!encontrouAlgum)
+        printf("Nenhum");
+    printf("\n");
+
+    /* Arestas de Corte*/
+    encontrouAlgum = 0;
+    printf("Arestas de Corte: ");
+    for (i = 0; i < ordemG; i++)
+    {
+        aux = G[i].prim;
+        while (aux != NULL)
+        {
+            /* Para nao testar a mesma aresta duas vezes, so consideramos i < vizinho */
+            if (i < aux->vizinho)
+            {
+                if (eArestaDeCorte(G, ordemG, i, aux->vizinho))
+                {
+                    printf("(v%d,v%d) ", i, aux->vizinho);
+                    encontrouAlgum = 1;
+                }
+            }
+            aux = aux->prox;
+        }
+    }
+    if (!encontrouAlgum)
+        printf("Nenhuma");
+    printf("\n");
 
     destroiGrafo(&G, ordemG);
 
     printf("\nPressione ENTER para terminar\n");
     getchar();
-    return (0);
+    return 0;
 }
